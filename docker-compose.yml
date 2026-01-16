@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  x-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: x-ui
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./data:/etc/x-ui/
+      - ./cert:/root/cert/
+      - ./logs:/var/log/x-ui/
+    environment:
+      - XUI_LOG_LEVEL=info
+      - XUI_DEBUG=false
+    ports:
+      - "54321:54321"  # Web管理界面端口
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:54321/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
