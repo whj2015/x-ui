@@ -156,7 +156,7 @@ func (p *process) Start() (err error) {
 		return common.NewErrorf("生成 xray 配置文件失败: %v", err)
 	}
 	configPath := GetConfigPath()
-	err = os.WriteFile(configPath, data, fs.ModePerm)
+	err = os.WriteFile(configPath, data, 0600)
 	if err != nil {
 		return common.NewErrorf("写入配置文件失败: %v", err)
 	}

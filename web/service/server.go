@@ -274,7 +274,7 @@ func (s *ServerService) UpdateXray(version string) error {
 			return err
 		}
 		os.Remove(fileName)
-		file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
+		file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0755)
 		if err != nil {
 			return err
 		}

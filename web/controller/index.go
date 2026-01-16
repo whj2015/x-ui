@@ -5,6 +5,7 @@ import (
 	"time"
 	"x-ui/logger"
 	"x-ui/web/job"
+	"x-ui/web/middleware"
 	"x-ui/web/service"
 	"x-ui/web/session"
 
@@ -29,8 +30,8 @@ func NewIndexController(g *gin.RouterGroup) *IndexController {
 }
 
 func (a *IndexController) initRouter(g *gin.RouterGroup) {
+	g.POST("/login", middleware.RateLimitMiddleware(), a.login)
 	g.GET("/", a.index)
-	g.POST("/login", a.login)
 	g.GET("/logout", a.logout)
 }
 
@@ -61,7 +62,7 @@ func (a *IndexController) login(c *gin.Context) {
 	timeStr := time.Now().Format("2006-01-02 15:04:05")
 	if user == nil {
 		job.NewStatsNotifyJob().UserLoginNotify(form.Username, getRemoteIp(c), timeStr, 0)
-		logger.Infof("wrong username or password: \"%s\" \"%s\"", form.Username, form.Password)
+		logger.Warningf("登录失败: 用户名=%s, IP=%s", form.Username, getRemoteIp(c))
 		pureJsonMsg(c, false, "用户名或密码错误")
 		return
 	} else {

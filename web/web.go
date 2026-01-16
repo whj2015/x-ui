@@ -167,16 +167,36 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	}
 	assetsBasePath := basePath + "assets/"
 
-	store := cookie.NewStore(secret)
+	store := cookie.NewStore(secret, cookie.WithSameSite(http.SameSiteStrictMode))
 	engine.Use(sessions.Sessions("session", store))
+
 	engine.Use(func(c *gin.Context) {
 		c.Set("base_path", basePath)
 	})
+
+	engine.Use(func(c *gin.Context) {
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()")
+	})
+
 	engine.Use(func(c *gin.Context) {
 		uri := c.Request.RequestURI
 		if strings.HasPrefix(uri, assetsBasePath) {
 			c.Header("Cache-Control", "max-age=31536000")
 		}
+	})
+
+	engine.Use(func(c *gin.Context) {
+		session := sessions.Default(c)
+		session.Options(sessions.Options{
+			Path:     basePath,
+			HttpOnly: true,
+			MaxAge:   86400 * 7,
+			SameSite: http.SameSiteStrictMode,
+		})
 	})
 	err = s.initI18n(engine)
 	if err != nil {

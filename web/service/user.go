@@ -5,7 +5,9 @@ import (
 	"x-ui/database"
 	"x-ui/database/model"
 	"x-ui/logger"
+	"x-ui/util/validation"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -25,12 +27,26 @@ func (s *UserService) GetFirstUser() (*model.User, error) {
 	return user, nil
 }
 
+func (s *UserService) HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
+}
+
+func (s *UserService) CheckPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func (s *UserService) IsHashedPassword(password string) bool {
+	return len(password) == 60 && password[0:2] == "$2"
+}
+
 func (s *UserService) CheckUser(username string, password string) *model.User {
 	db := database.GetDB()
 
 	user := &model.User{}
 	err := db.Model(model.User{}).
-		Where("username = ? and password = ?", username, password).
+		Where("username = ?", username).
 		First(user).
 		Error
 	if err == gorm.ErrRecordNotFound {
@@ -39,7 +55,17 @@ func (s *UserService) CheckUser(username string, password string) *model.User {
 		logger.Warning("check user err:", err)
 		return nil
 	}
-	return user
+
+	if s.IsHashedPassword(user.Password) {
+		if s.CheckPassword(password, user.Password) {
+			return user
+		}
+	} else {
+		if user.Password == password {
+			return user
+		}
+	}
+	return nil
 }
 
 func (s *UserService) UpdateUser(id int, username string, password string) error {
@@ -52,6 +78,13 @@ func (s *UserService) UpdateUser(id int, username string, password string) error
 }
 
 func (s *UserService) UpdateFirstUser(username string, password string) error {
+	if err := validation.ValidateUsername(username); err != nil {
+		return err
+	}
+	if err := validation.ValidatePassword(password); err != nil {
+		return err
+	}
+
 	if username == "" {
 		return errors.New("username can not be empty")
 	} else if password == "" {
@@ -61,13 +94,22 @@ func (s *UserService) UpdateFirstUser(username string, password string) error {
 	user := &model.User{}
 	err := db.Model(model.User{}).First(user).Error
 	if database.IsNotFound(err) {
+		hashedPassword, err := s.HashPassword(password)
+		if err != nil {
+			return errors.New("密码加密失败: " + err.Error())
+		}
 		user.Username = username
-		user.Password = password
+		user.Password = hashedPassword
 		return db.Model(model.User{}).Create(user).Error
 	} else if err != nil {
 		return err
 	}
+
+	hashedPassword, err := s.HashPassword(password)
+	if err != nil {
+		return errors.New("密码加密失败: " + err.Error())
+	}
 	user.Username = username
-	user.Password = password
+	user.Password = hashedPassword
 	return db.Save(user).Error
 }
