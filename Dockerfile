@@ -1,6 +1,9 @@
 # 构建阶段：使用Go编译器
 FROM golang:1.21-alpine AS builder
 
+# 使用国内镜像源加速Go模块下载
+ENV GOPROXY=https://goproxy.cn,direct
+
 # 安装git用于下载依赖
 RUN apk add --no-cache git
 
