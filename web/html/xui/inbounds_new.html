@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="x-ui 面板 - 入站列表">
+    <title>入站列表 - x-ui 面板</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@1.7.2/dist/antd.min.css">
+    <link rel="stylesheet" href="../assets/css/modern.css">
+    <style>
+        .inbound-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .inbound-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .inbound-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .inbound-header-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .inbound-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .inbound-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .add-btn {
+            background: white;
+            color: #10b981;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .stat-value.up { color: #10b981; }
+        .stat-value.down { color: #3b82f6; }
+        .stat-value.total { color: #667eea; }
+
+        /* Table Card */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Search Input */
+        .search-wrapper {
+            position: relative;
+            width: 280px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 44px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        /* Table Styles */
+        .ant-table {
+            background: transparent !important;
+        }
+
+        .ant-table-thead > tr > th {
+            background: #f8fafc !important;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 16px 20px !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        .ant-table-tbody > tr > td {
+            padding: 16px 20px !important;
+            border-bottom: 1px solid #f3f4f6 !important;
+        }
+
+        .ant-table-tbody > tr:hover > td {
+            background: #f8fafc !important;
+        }
+
+        /* Protocol Tags */
+        .protocol-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .protocol-tag.vmess { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .protocol-tag.vless { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .protocol-tag.trojan { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .protocol-tag.shadowsocks { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .protocol-tag.socks { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .protocol-tag.http { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+
+        /* Enable Switch */
+        .enable-switch {
+            cursor: pointer;
+        }
+
+        /* Action Button */
+        .action-dropdown {
+            cursor: pointer;
+        }
+
+        /* Traffic Bar */
+        .traffic-bar {
+            width: 100%;
+            max-width: 150px;
+        }
+
+        .traffic-progress {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .traffic-progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .traffic-progress-fill.green { background: #10b981; }
+        .traffic-progress-fill.yellow { background: #f59e0b; }
+        .traffic-progress-fill.red { background: #ef4444; }
+
+        .traffic-text {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .inbound-container {
+                padding: 12px;
+            }
+
+            .inbound-header {
+                padding: 24px;
+            }
+
+            .inbound-header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .inbound-title {
+                font-size: 24px;
+            }
+
+            .add-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .stat-item {
+                padding: 12px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .search-wrapper {
+                width: 100%;
+            }
+
+            .table-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .ant-table {
+                font-size: 12px;
+            }
+
+            .ant-table-thead > tr > th,
+            .ant-table-tbody > tr > td {
+                padding: 12px 8px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <div class="inbound-container">
+            <!-- Header -->
+            <div class="inbound-header animate-fade-in-down">
+                <div class="inbound-header-content">
+                    <div>
+                        <h1 class="inbound-title">入站列表</h1>
+                        <p class="inbound-subtitle">管理您的代理入站连接</p>
+                    </div>
+                    <button class="add-btn hover-lift" @click="openAddInbound">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        添加入站
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="stat-item">
+                    <div class="stat-value up">{{ sizeFormat(total.up) }}</div>
+                    <div class="stat-label">总上传</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value down">{{ sizeFormat(total.down) }}</div>
+                    <div class="stat-label">总下载</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value total">{{ dbInbounds.length }}</div>
+                    <div class="stat-label">入站数量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ sizeFormat(total.up + total.down) }}</div>
+                    <div class="stat-label">总流量</div>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="table-card animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="table-header">
+                    <h2 class="table-title">入站连接</h2>
+                    <div class="table-actions">
+                        <div class="search-wrapper">
+                            <span class="search-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                            </span>
+                            <input
+                                type="text"
+                                class="search-input"
+                                placeholder="搜索入站..."
+                                v-model="searchKey"
+                                @input="searchInbounds"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <a-table
+                    :columns="columns"
+                    :row-key="dbInbound => dbInbound.id"
+                    :data-source="filteredInbounds"
+                    :loading="spinning"
+                    :pagination="false"
+                    :scroll="{ x: 1200 }"
+                >
+                    <template slot="enable" slot-scope="text, dbInbound">
+                        <a-switch
+                            :checked="dbInbound.enable"
+                            @change="switchEnable(dbInbound)"
+                            class="enable-switch"
+                        />
+                    </template>
+
+                    <template slot="protocol" slot-scope="text, dbInbound">
+                        <span class="protocol-tag" :class="dbInbound.protocol.toLowerCase()">
+                            {{ dbInbound.protocol }}
+                        </span>
+                    </template>
+
+                    <template slot="traffic" slot-scope="text, dbInbound">
+                        <div class="traffic-bar">
+                            <div class="traffic-progress">
+                                <div
+                                    class="traffic-progress-fill"
+                                    :class="getTrafficClass(dbInbound)"
+                                    :style="{ width: getTrafficPercent(dbInbound) + '%' }"
+                                ></div>
+                            </div>
+                            <div class="traffic-text">
+                                {{ sizeFormat(dbInbound.up) }} / {{ sizeFormat(dbInbound.down) }}
+                                <template v-if="dbInbound.total > 0">
+                                    / {{ sizeFormat(dbInbound.total) }}
+                                </template>
+                                <template v-else>
+                                    (无限制)
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template slot="port" slot-scope="text, dbInbound">
+                        <a-tag color="blue">{{ dbInbound.port }}</a-tag>
+                    </template>
+
+                    <template slot="expiryTime" slot-scope="text, dbInbound">
+                        <template v-if="dbInbound.expiryTime > 0">
+                            <a-tag :color="dbInbound.isExpiry ? 'red' : 'blue'">
+                                {{ DateUtil.formatMillis(dbInbound.expiryTime) }}
+                            </a-tag>
+                        </template>
+                        <a-tag v-else color="green">无限期</a-tag>
+                    </template>
+
+                    <template slot="action" slot-scope="text, dbInbound">
+                        <a-dropdown :trigger="['click']" class="action-dropdown">
+                            <a @click="e => e.preventDefault()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="1"/>
+                                    <circle cx="12" cy="5" r="1"/>
+                                    <circle cx="12" cy="19" r="1"/>
+                                </svg>
+                            </a>
+                            <a-menu slot="overlay" @click="a => clickAction(a, dbInbound)">
+                                <a-menu-item key="qrcode">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                        <rect x="3" y="3" width="7" height="7"/>
+                                        <rect x="14" y="3" width="7" height="7"/>
+                                        <rect x="3" y="14" width="7" height="7"/>
+                                        <rect x="14" y="14" width="3" height="3"/>
+                                        <rect x="18" y="14" width="3" height="3"/>
+                                        <rect x="14" y="18" width="3" height="3"/>
+                                        <rect x="18" y="18" width="3" height="3"/>
+                                    </svg>
+                                    二维码
+                                </a-menu-item>
+                                <a-menu-item key="edit">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                    编辑
+                                </a-menu-item>
+                                <a-menu-item key="resetTraffic">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                        <polyline points="23 4 23 10 17 10"/>
+                                        <polyline points="1 20 1 14 7 14"/>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                                    </svg>
+                                    重置流量
+                                </a-menu-item>
+                                <a-menu-item key="delete" style="color: #ef4444;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                    删除
+                                </a-menu-item>
+                            </a-menu>
+                        </a-dropdown>
+                    </template>
+                </a-table>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <a-modal id="inbound-modal" v-model="inModal.visible" :title="inModal.title"
+                 :closable="true" :width="800"
+                 @ok="() => inModal.visible = false"
+                 ok-text="确定" cancel-text="取消">
+            <div v-if="inModal.visible">
+                <a-form :label-col="{ span: 4 }" :wrapper-col="{ span: 18 }">
+                    <a-form-item label="备注">
+                        <a-input v-model="inModal.dbInbound.remark" placeholder="备注名称"/>
+                    </a-form-item>
+                    <a-form-item label="启用">
+                        <a-switch v-model="inModal.dbInbound.enable"/>
+                    </a-form-item>
+                    <a-form-item label="端口">
+                        <a-input-number v-model="inModal.dbInbound.port" style="width: 100%"/>
+                    </a-form-item>
+                    <a-form-item label="总流量">
+                        <a-input-number v-model="inModal.dbInbound.total" style="width: 100%"/>
+                    </a-form-item>
+                    <a-form-item label="到期时间">
+                        <a-date-picker v-model="inModal.expiryTime" style="width: 100%"/>
+                    </a-form-item>
+                </a-form>
+            </div>
+        </a-modal>
+
+        <!-- QR Code Modal -->
+        <a-modal id="qrcode-modal" v-model="qrModal.visible" :title="qrModal.title"
+                 :closable="true" @ok="() => qrModal.visible = false"
+                 ok-text="确定" cancel-text="取消">
+            <div v-if="qrModal.visible" style="text-align: center;">
+                <canvas id="qrcode-canvas"></canvas>
+            </div>
+        </a-modal>
+
+        <!-- Info Modal -->
+        <a-modal id="info-modal" v-model="infoModal.visible" :title="infoModal.title"
+                 :closable="true" @ok="() => infoModal.visible = false"
+                 ok-text="确定" cancel-text="取消">
+            <div v-if="infoModal.visible">
+                <a-descriptions :column="1" bordered>
+                    <a-descriptions-item label="ID">{{ infoModal.dbInbound.id }}</a-descriptions-item>
+                    <a-descriptions-item label="备注">{{ infoModal.dbInbound.remark }}</a-descriptions-item>
+                    <a-descriptions-item label="协议">{{ infoModal.dbInbound.protocol }}</a-descriptions-item>
+                    <a-descriptions-item label="端口">{{ infoModal.dbInbound.port }}</a-descriptions-item>
+                    <a-descriptions-item label="状态">
+                        <a-tag :color="infoModal.dbInbound.enable ? 'green' : 'red'">
+                            {{ infoModal.dbInbound.enable ? '启用' : '禁用' }}
+                        </a-tag>
+                    </a-descriptions-item>
+                </a-descriptions>
+            </div>
+        </a-modal>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@1.7.2/dist/antd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="../assets/js/util/common.js"></script>
+    <script src="../assets/js/util/date-util.js"></script>
+    <script src="../assets/js/model/models.js"></script>
+    <script src="../assets/js/axios-init.js"></script>
+
+    <script>
+        const columns = [
+            { title: '启用', width: 60, align: 'center', scopedSlots: { customRender: 'enable' } },
+            { title: 'ID', width: 60, align: 'center', dataIndex: 'id' },
+            { title: '备注', width: 120, align: 'center', dataIndex: 'remark' },
+            { title: '协议', width: 100, align: 'center', scopedSlots: { customRender: 'protocol' } },
+            { title: '端口', width: 80, align: 'center', scopedSlots: { customRender: 'port' } },
+            { title: '流量 (已用/上限)', width: 180, align: 'center', scopedSlots: { customRender: 'traffic' } },
+            { title: '到期时间', width: 120, align: 'center', scopedSlots: { customRender: 'expiryTime' } },
+            { title: '操作', width: 60, align: 'center', scopedSlots: { customRender: 'action' } },
+        ];
+
+        const app = new Vue({
+            el: '#app',
+            data: {
+                spinning: false,
+                inbounds: [],
+                dbInbounds: [],
+                searchKey: '',
+                columns,
+                inModal: { visible: false, title: '', dbInbound: {}, expiryTime: null },
+                qrModal: { visible: false, title: '', content: '' },
+                infoModal: { visible: false, title: '', dbInbound: {} },
+            },
+            computed: {
+                filteredInbounds() {
+                    if (!this.searchKey) {
+                        return this.dbInbounds;
+                    }
+                    const key = this.searchKey.toLowerCase();
+                    return this.dbInbounds.filter(inbound =>
+                        inbound.remark.toLowerCase().includes(key) ||
+                        inbound.protocol.toLowerCase().includes(key) ||
+                        String(inbound.port).includes(key)
+                    );
+                },
+                total() {
+                    let down = 0, up = 0;
+                    for (const inbound of this.dbInbounds) {
+                        down += inbound.down;
+                        up += inbound.up;
+                    }
+                    return { down, up };
+                }
+            },
+            methods: {
+                sizeFormat(bytes) {
+                    if (bytes === 0) return '0 B';
+                    const k = 1024;
+                    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                },
+                getTrafficPercent(dbInbound) {
+                    if (dbInbound.total <= 0) return 0;
+                    const used = dbInbound.up + dbInbound.down;
+                    return Math.min(100, (used / dbInbound.total * 100));
+                },
+                getTrafficClass(dbInbound) {
+                    if (dbInbound.total <= 0) return 'green';
+                    const percent = this.getTrafficPercent(dbInbound);
+                    if (percent >= 100) return 'red';
+                    if (percent >= 80) return 'yellow';
+                    return 'green';
+                },
+                async getDBInbounds() {
+                    this.spinning = true;
+                    try {
+                        const msg = await HttpUtil.post('/xui/inbound/list');
+                        this.spinning = false;
+                        if (msg.success) {
+                            this.setInbounds(msg.obj);
+                        }
+                    } catch (e) {
+                        this.spinning = false;
+                        console.error(e);
+                    }
+                },
+                setInbounds(dbInbounds) {
+                    this.inbounds.splice(0);
+                    this.dbInbounds.splice(0);
+                    for (const inbound of dbInbounds) {
+                        const dbInbound = new DBInbound(inbound);
+                        this.inbounds.push(dbInbound.toInbound());
+                        this.dbInbounds.push(dbInbound);
+                    }
+                },
+                searchInbounds() {
+                    // Filtering is handled by computed property
+                },
+                clickAction(action, dbInbound) {
+                    switch (action.key) {
+                        case 'qrcode':
+                            this.showQrcode(dbInbound);
+                            break;
+                        case 'edit':
+                            this.openEditInbound(dbInbound);
+                            break;
+                        case 'resetTraffic':
+                            this.resetTraffic(dbInbound);
+                            break;
+                        case 'delete':
+                            this.delInbound(dbInbound);
+                            break;
+                    }
+                },
+                openAddInbound() {
+                    inModal.show({
+                        title: '添加入站',
+                        okText: '添加',
+                        confirm: async (inbound, dbInbound) => {
+                            inModal.loading();
+                            await this.addInbound(inbound, dbInbound);
+                            inModal.close();
+                        }
+                    });
+                },
+                openEditInbound(dbInbound) {
+                    const inbound = dbInbound.toInbound();
+                    inModal.show({
+                        title: '修改入站',
+                        okText: '修改',
+                        inbound: inbound,
+                        dbInbound: dbInbound,
+                        confirm: async (inbound, dbInbound) => {
+                            inModal.loading();
+                            await this.updateInbound(inbound, dbInbound);
+                            inModal.close();
+                        }
+                    });
+                },
+                showQrcode(dbInbound) {
+                    const link = dbInbound.genLink();
+                    qrModal.show('二维码', link);
+                    this.$nextTick(() => {
+                        new QRious({
+                            element: document.getElementById('qrcode-canvas'),
+                            value: link,
+                            size: 200,
+                        });
+                    });
+                },
+                showInfo(dbInbound) {
+                    infoModal.show(dbInbound);
+                },
+                switchEnable(dbInbound) {
+                    dbInbound.enable = !dbInbound.enable;
+                    this.submit(`/xui/inbound/update/${dbInbound.id}`, dbInbound);
+                },
+                resetTraffic(dbInbound) {
+                    this.$confirm({
+                        title: '重置流量',
+                        content: '确定要重置流量吗?',
+                        okText: '重置',
+                        cancelText: '取消',
+                        onOk: () => {
+                            dbInbound.up = 0;
+                            dbInbound.down = 0;
+                            this.updateInbound(dbInbound.toInbound(), dbInbound);
+                        },
+                    });
+                },
+                delInbound(dbInbound) {
+                    this.$confirm({
+                        title: '删除入站',
+                        content: '确定要删除入站吗?',
+                        okText: '删除',
+                        cancelText: '取消',
+                        onOk: () => this.submit(`/xui/inbound/del/${dbInbound.id}`),
+                    });
+                },
+                async submit(url, data) {
+                    const msg = await HttpUtil.postWithModal(url, data);
+                    if (msg.success) {
+                        await this.getDBInbounds();
+                    }
+                },
+                async addInbound(inbound, dbInbound) {
+                    const data = {
+                        up: dbInbound.up,
+                        down: dbInbound.down,
+                        total: dbInbound.total,
+                        remark: dbInbound.remark,
+                        enable: dbInbound.enable,
+                        expiryTime: dbInbound.expiryTime,
+                        listen: inbound.listen,
+                        port: inbound.port,
+                        protocol: inbound.protocol,
+                        settings: inbound.settings.toString(),
+                        streamSettings: inbound.stream.toString(),
+                        sniffing: inbound.canSniffing() ? inbound.sniffing.toString() : '{}',
+                    };
+                    await this.submit('/xui/inbound/add', data);
+                },
+                async updateInbound(inbound, dbInbound) {
+                    const data = {
+                        up: dbInbound.up,
+                        down: dbInbound.down,
+                        total: dbInbound.total,
+                        remark: dbInbound.remark,
+                        enable: dbInbound.enable,
+                        expiryTime: dbInbound.expiryTime,
+                        listen: inbound.listen,
+                        port: inbound.port,
+                        protocol: inbound.protocol,
+                        settings: inbound.settings.toString(),
+                        streamSettings: inbound.stream.toString(),
+                        sniffing: inbound.canSniffing() ? inbound.sniffing.toString() : '{}',
+                    };
+                    await this.submit(`/xui/inbound/update/${dbInbound.id}`, data);
+                }
+            },
+            mounted() {
+                this.getDBInbounds();
+            },
+        });
+
+        // Modal instances
+        const inModal = {
+            visible: false,
+            loading: () => {},
+            show(config) {
+                this.visible = true;
+                this.title = config.title;
+            },
+            close() {
+                this.visible = false;
+            }
+        };
+
+        const qrModal = {
+            visible: false,
+            show(title, content) {
+                this.visible = true;
+                this.title = title;
+                this.content = content;
+            }
+        };
+
+        const infoModal = {
+            visible: false,
+            show(dbInbound) {
+                this.visible = true;
+                this.title = '入站详情 - ' + dbInbound.remark;
+                this.dbInbound = dbInbound;
+            }
+        };
+    </script>
+</body>
+</html>
