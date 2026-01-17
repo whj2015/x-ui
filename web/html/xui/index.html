@@ -1,334 +1,806 @@
 <!DOCTYPE html>
-<html lang="en">
-{{template "head" .}}
-<style>
-    @media (min-width: 769px) {
-        .ant-layout-content {
-            margin: 24px 16px;
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="x-ui 面板 - 系统状态">
+    <title>系统状态 - x-ui 面板</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@1.7.2/dist/antd.min.css">
+    <link rel="stylesheet" href="../assets/css/modern.css">
+    <style>
+        /* Dashboard specific styles */
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
-    }
 
-    .ant-col-sm-24 {
-        margin-top: 10px;
-    }
-</style>
+        /* Header */
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .dashboard-header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .dashboard-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+
+        .stat-icon.primary { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+        .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .stat-icon.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .stat-icon.info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .progress-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .progress-circle {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+
+        .progress-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle-bg {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 8;
+        }
+
+        .progress-circle-fill {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .progress-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Info Cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .info-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .status-badge.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .status-badge.info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        /* Network Speed */
+        .network-speed {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .speed-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .speed-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .speed-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .speed-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* Version Card */
+        .version-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .version-info h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .version-info p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .version-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .version-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .version-btn.primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .version-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 12px;
+            }
+
+            .dashboard-header {
+                padding: 24px;
+            }
+
+            .dashboard-title {
+                font-size: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .version-card {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .version-actions {
+                width: 100%;
+            }
+
+            .version-btn {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
 <body>
-<a-layout id="app" v-cloak>
-    {{ template "commonSider" . }}
-    <a-layout id="content-layout">
-        <a-layout-content>
-            <a-spin :spinning="spinning" :delay="200" :tip="loadingTip"/>
-            <transition name="list" appear>
-                <a-row>
-                    <a-card hoverable>
-                        <a-row>
-                            <a-col :sm="24" :md="12">
-                                <a-row>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.cpu.color"
-                                                    :percent="status.cpu.percent"></a-progress>
-                                        <div>CPU</div>
-                                    </a-col>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.mem.color"
-                                                    :percent="status.mem.percent"></a-progress>
-                                        <div>
-                                            内存: [[ sizeFormat(status.mem.current) ]] / [[ sizeFormat(status.mem.total) ]]
-                                        </div>
-                                    </a-col>
-                                </a-row>
-                            </a-col>
-                            <a-col :sm="24" :md="12">
-                                <a-row>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.swap.color"
-                                                    :percent="status.swap.percent"></a-progress>
-                                        <div>
-                                            swap: [[ sizeFormat(status.swap.current) ]] / [[ sizeFormat(status.swap.total) ]]
-                                        </div>
-                                    </a-col>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.disk.color"
-                                                    :percent="status.disk.percent"></a-progress>
-                                        <div>
-                                            硬盘: [[ sizeFormat(status.disk.current) ]] / [[ sizeFormat(status.disk.total) ]]
-                                        </div>
-                                    </a-col>
-                                </a-row>
-                            </a-col>
-                        </a-row>
-                    </a-card>
-                </a-row>
-            </transition>
-            <transition name="list" appear>
-                <a-row>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            xray 状态:
-                            <a-tag :color="status.xray.color">[[ status.xray.state ]]</a-tag>
-                            <a-tooltip v-if="status.xray.state === State.Error">
-                                <template slot="title">
-                                    <p v-for="line in status.xray.errorMsg.split('\n')">[[ line ]]</p>
-                                </template>
-                                <a-icon type="question-circle" theme="filled"></a-icon>
-                            </a-tooltip>
-                            <a-tag color="green" @click="openSelectV2rayVersion">[[ status.xray.version ]]</a-tag>
-                            <a-tag color="blue" @click="openSelectV2rayVersion">切换版本</a-tag>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            运行时间:
-                            <a-tag color="#87d068">[[ formatSecond(status.uptime) ]]</a-tag>
+    <div id="app" v-cloak>
+        <!-- Dashboard Header -->
+        <div class="dashboard-container">
+            <div class="dashboard-header animate-fade-in-down">
+                <div class="dashboard-header-content">
+                    <h1 class="dashboard-title">系统状态</h1>
+                    <p class="dashboard-subtitle">实时监控服务器性能和网络状态</p>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="stat-card hover-lift" v-for="(stat, index) in quickStats" :key="index">
+                    <div class="stat-icon" :class="stat.iconClass">
+                        <span v-html="stat.icon"></span>
+                    </div>
+                    <div class="stat-value">{{ stat.value }}</div>
+                    <div class="stat-label">{{ stat.label }}</div>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="progress-card" v-for="(prog, key) in progressItems" :key="key">
+                    <div class="progress-circle">
+                        <svg width="120" height="120" viewBox="0 0 120 120">
+                            <circle class="progress-circle-bg" cx="60" cy="60" r="52"/>
+                            <circle
+                                class="progress-circle-fill"
+                                :stroke="prog.color"
+                                cx="60" cy="60" r="52"
+                                :stroke-dasharray="326.73"
+                                :stroke-dashoffset="326.73 - (326.73 * prog.percent / 100)"
+                            />
+                        </svg>
+                        <div class="progress-circle-text">
+                            <div class="progress-value">{{ prog.percent.toFixed(1) }}%</div>
+                            <div class="progress-label">{{ prog.label }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Grid -->
+            <div class="info-grid animate-fade-in-up" style="animation-delay: 0.3s;">
+                <!-- XRay Status -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span class="info-card-title">Xray 状态</span>
+                        <span class="status-badge" :class="status.xray.color">
+                            <span class="status-dot"></span>
+                            {{ status.xray.state }}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">版本</span>
+                        <span class="info-value">
+                            <a-tag color="blue" @click="openSelectV2rayVersion" style="cursor: pointer;">
+                                {{ status.xray.version }}
+                            </a-tag>
+                        </span>
+                    </div>
+                    <div class="info-row" v-if="status.xray.errorMsg">
+                        <span class="info-label">错误信息</span>
+                        <a-tooltip>
+                            <template slot="title">
+                                <p v-for="line in status.xray.errorMsg.split('\n')">{{ line }}</p>
+                            </template>
+                            <a-icon type="question-circle" style="color: #f59e0b; cursor: pointer;"/>
+                        </a-tooltip>
+                    </div>
+                </div>
+
+                <!-- Uptime -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span class="info-card-title">运行时间</span>
+                        <span class="status-badge success">
+                            <span class="status-dot"></span>
+                            运行中
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">运行时长</span>
+                        <span class="info-value">
+                            {{ formatSecond(status.uptime) }}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">系统负载</span>
+                        <span class="info-value">
+                            {{ status.loads[0] }} | {{ status.loads[1] }} | {{ status.loads[2] }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Network Connections -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span class="info-card-title">网络连接</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">TCP 连接</span>
+                        <span class="info-value">{{ status.tcpCount }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">UDP 连接</span>
+                        <span class="info-value">{{ status.udpCount }}</span>
+                    </div>
+                </div>
+
+                <!-- Network Speed -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span class="info-card-title">网络速度</span>
+                    </div>
+                    <div class="network-speed">
+                        <div class="speed-item">
+                            <div class="speed-icon">⬆️</div>
+                            <div class="speed-value">{{ sizeFormat(status.netIO.up) }}/s</div>
+                            <div class="speed-label">上传速度</div>
+                        </div>
+                        <div class="speed-item">
+                            <div class="speed-icon">⬇️</div>
+                            <div class="speed-value">{{ sizeFormat(status.netIO.down) }}/s</div>
+                            <div class="speed-label">下载速度</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Traffic -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span class="info-card-title">网络流量</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">总上传</span>
+                        <span class="info-value">
+                            <span style="color: #10b981;">{{ sizeFormat(status.netTraffic.sent) }}</span>
                             <a-tooltip>
-                                <template slot="title">
-                                    系统自启动以来的运行时间
-                                </template>
-                                <a-icon type="question-circle" theme="filled"></a-icon>
+                                <template slot="title">系统启动以来所有网卡的总上传流量</template>
+                                <a-icon type="question-circle" style="color: #94a3b8;"/>
                             </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            系统负载: [[ status.loads[0] ]] | [[ status.loads[1] ]] | [[ status.loads[2] ]]
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            tcp / udp 连接数: [[ status.tcpCount ]] / [[ status.udpCount ]]
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">总下载</span>
+                        <span class="info-value">
+                            <span style="color: #3b82f6;">{{ sizeFormat(status.netTraffic.recv) }}</span>
                             <a-tooltip>
-                                <template slot="title">
-                                    所有网卡的总连接数
-                                </template>
-                                <a-icon type="question-circle" theme="filled"></a-icon>
+                                <template slot="title">系统启动以来所有网卡的总下载流量</template>
+                                <a-icon type="question-circle" style="color: #94a3b8;"/>
                             </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="arrow-up"></a-icon>
-                                    [[ sizeFormat(status.netIO.up) ]] / S
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            所有网卡的总上传速度
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="arrow-down"></a-icon>
-                                    [[ sizeFormat(status.netIO.down) ]] / S
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            所有网卡的总下载速度
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="cloud-upload"></a-icon>
-                                    [[ sizeFormat(status.netTraffic.sent) ]]
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            系统启动以来所有网卡的总上传流量
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="cloud-download"></a-icon>
-                                    [[ sizeFormat(status.netTraffic.recv) ]]
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            系统启动以来所有网卡的总下载流量
-                                        </template>
-                                        <a-icon type="question-circle" theme="filled"></a-icon>
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                </a-row>
-            </transition>
-        </a-layout-content>
-    </a-layout>
-    <a-modal id="version-modal" v-model="versionModal.visible" title="切换版本"
-             :closable="true" @ok="() => versionModal.visible = false"
-             ok-text="确定" cancel-text="取消">
-        <h2>点击你想切换的版本</h2>
-        <h2>请谨慎选择，旧版本可能配置不兼容</h2>
-        <template v-for="version, index in versionModal.versions">
-            <a-tag :color="index % 2 == 0 ? 'blue' : 'green'"
-                   style="margin: 10px" @click="switchV2rayVersion(version)">
-                [[ version ]]
-            </a-tag>
-        </template>
-    </a-modal>
-</a-layout>
-{{template "js" .}}
-<script>
+                        </span>
+                    </div>
+                </div>
 
-    const State = {
-        Running: "running",
-        Stop: "stop",
-        Error: "error",
-    }
-    Object.freeze(State);
+                <!-- Version Info -->
+                <div class="version-card" style="grid-column: 1 / -1;">
+                    <div class="version-info">
+                        <h3>Xray 版本管理</h3>
+                        <p>当前版本: {{ status.xray.version }}</p>
+                    </div>
+                    <div class="version-actions">
+                        <button class="version-btn primary" @click="openSelectV2rayVersion">
+                            切换版本
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    class CurTotal {
+        <!-- Version Modal -->
+        <a-modal
+            id="version-modal"
+            v-model="versionModal.visible"
+            title="切换版本"
+            :closable="true"
+            @ok="() => versionModal.visible = false"
+            ok-text="确定"
+            cancel-text="取消"
+            class="modern-modal"
+        >
+            <h2 style="margin-bottom: 8px;">点击你想切换的版本</h2>
+            <p style="color: #64748b; margin-bottom: 16px;">请谨慎选择，旧版本可能配置不兼容</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <a-tag
+                    v-for="(version, index) in versionModal.versions"
+                    :key="version"
+                    :color="index % 2 == 0 ? 'blue' : 'green'"
+                    style="margin: 8px; cursor: pointer; padding: 8px 16px; font-size: 14px;"
+                    @click="switchV2rayVersion(version)"
+                >
+                    {{ version }}
+                </a-tag>
+            </div>
+        </a-modal>
+    </div>
 
-        constructor(current, total) {
-            this.current = current;
-            this.total = total;
-        }
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@1.7.2/dist/antd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="../assets/js/util/common.js"></script>
+    <script src="../assets/js/util/date-util.js"></script>
+    <script src="../assets/js/model/models.js"></script>
+    <script src="../assets/js/axios-init.js"></script>
 
-        get percent() {
-            if (this.total === 0) {
-                return 0;
+    <script>
+        const State = {
+            Running: "running",
+            Stop: "stop",
+            Error: "error",
+        };
+        Object.freeze(State);
+
+        class CurTotal {
+            constructor(current, total) {
+                this.current = current;
+                this.total = total;
             }
-            return toFixed(this.current / this.total * 100, 2);
-        }
 
-        get color() {
-            const percent = this.percent;
-            if (percent < 80) {
-                return '#67C23A';
-            } else if (percent < 90) {
-                return '#E6A23C';
-            } else {
-                return '#F56C6C';
-            }
-        }
-    }
-
-    class Status {
-        constructor(data) {
-            this.cpu = new CurTotal(0, 0);
-            this.disk = new CurTotal(0, 0);
-            this.loads = [0, 0, 0];
-            this.mem = new CurTotal(0, 0);
-            this.netIO = {up: 0, down: 0};
-            this.netTraffic = {sent: 0, recv: 0};
-            this.swap = new CurTotal(0, 0);
-            this.tcpCount = 0;
-            this.udpCount = 0;
-            this.uptime = 0;
-            this.xray = {state: State.Stop, errorMsg: "", version: "", color: ""};
-
-            if (data == null) {
-                return;
-            }
-            this.cpu = new CurTotal(data.cpu, 100);
-            this.disk = new CurTotal(data.disk.current, data.disk.total);
-            this.loads = data.loads.map(load => toFixed(load, 2));
-            this.mem = new CurTotal(data.mem.current, data.mem.total);
-            this.netIO = data.netIO;
-            this.netTraffic = data.netTraffic;
-            this.swap = new CurTotal(data.swap.current, data.swap.total);
-            this.tcpCount = data.tcpCount;
-            this.udpCount = data.udpCount;
-            this.uptime = data.uptime;
-            this.xray = data.xray;
-            switch (this.xray.state) {
-                case State.Running:
-                    this.xray.color = "green";
-                    break;
-                case State.Stop:
-                    this.xray.color = "orange";
-                    break;
-                case State.Error:
-                    this.xray.color = "red";
-                    break;
-                default:
-                    this.xray.color = "gray";
-            }
-        }
-    }
-
-    const versionModal = {
-        visible: false,
-        versions: [],
-        show(versions) {
-            this.visible = true;
-            this.versions = versions;
-        },
-        hide() {
-            this.visible = false;
-        },
-    };
-
-    const app = new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#app',
-        data: {
-            siderDrawer,
-            status: new Status(),
-            versionModal,
-            spinning: false,
-            loadingTip: '加载中',
-        },
-        methods: {
-            loading(spinning, tip = '加载中') {
-                this.spinning = spinning;
-                this.loadingTip = tip;
-            },
-            async getStatus() {
-                const msg = await HttpUtil.post('/server/status');
-                if (msg.success) {
-                    this.setStatus(msg.obj);
+            get percent() {
+                if (this.total === 0) {
+                    return 0;
                 }
-            },
-            setStatus(data) {
-                this.status = new Status(data);
-            },
-            async openSelectV2rayVersion() {
-                this.loading(true);
-                const msg = await HttpUtil.post('server/getXrayVersion');
-                this.loading(false);
-                if (!msg.success) {
+                return toFixed(this.current / this.total * 100, 2);
+            }
+
+            get color() {
+                const percent = this.percent;
+                if (percent < 80) {
+                    return '#10b981';
+                } else if (percent < 90) {
+                    return '#f59e0b';
+                } else {
+                    return '#ef4444';
+                }
+            }
+        }
+
+        class Status {
+            constructor(data) {
+                this.cpu = new CurTotal(0, 0);
+                this.disk = new CurTotal(0, 0);
+                this.loads = [0, 0, 0];
+                this.mem = new CurTotal(0, 0);
+                this.netIO = {up: 0, down: 0};
+                this.netTraffic = {sent: 0, recv: 0};
+                this.swap = new CurTotal(0, 0);
+                this.tcpCount = 0;
+                this.udpCount = 0;
+                this.uptime = 0;
+                this.xray = {state: State.Stop, errorMsg: "", version: "", color: ""};
+
+                if (data == null) {
                     return;
                 }
-                versionModal.show(msg.obj);
-            },
-            switchV2rayVersion(version) {
-                this.$confirm({
-                    title: '切换 xray 版本',
-                    content: '是否切换 xray 版本至' + ` ${version}?`,
-                    okText: '确定',
-                    cancelText: '取消',
-                    onOk: async () => {
-                        versionModal.hide();
-                        this.loading(true, '安装中，请不要刷新此页面');
-                        await HttpUtil.post(`/server/installXray/${version}`);
-                        this.loading(false);
-                    },
-                });
-            },
-        },
-        async mounted() {
-            while (true) {
-                try {
-                    await this.getStatus();
-                } catch (e) {
-                    console.error(e);
-                }
-                await PromiseUtil.sleep(2000);
-            }
-        },
-    });
 
-</script>
+                this.cpu = new CurTotal(data.cpu, 100);
+                this.disk = new CurTotal(data.disk.current, data.disk.total);
+                this.loads = data.loads.map(load => toFixed(load, 2));
+                this.mem = new CurTotal(data.mem.current, data.mem.total);
+                this.netIO = data.netIO;
+                this.netTraffic = data.netTraffic;
+                this.swap = new CurTotal(data.swap.current, data.swap.total);
+                this.tcpCount = data.tcpCount;
+                this.udpCount = data.udpCount;
+                this.uptime = data.uptime;
+                this.xray = data.xray;
+
+                switch (this.xray.state) {
+                    case State.Running:
+                        this.xray.color = "success";
+                        break;
+                    case State.Stop:
+                        this.xray.color = "warning";
+                        break;
+                    case State.Error:
+                        this.xray.color = "error";
+                        break;
+                    default:
+                        this.xray.color = "info";
+                }
+            }
+        }
+
+        const versionModal = {
+            visible: false,
+            versions: [],
+            show(versions) {
+                this.visible = true;
+                this.versions = versions;
+            },
+            hide() {
+                this.visible = false;
+            },
+        };
+
+        const app = new Vue({
+            el: '#app',
+            data: {
+                status: new Status(),
+                versionModal,
+            },
+            computed: {
+                quickStats() {
+                    return [
+                        {
+                            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>',
+                            iconClass: 'primary',
+                            value: this.status.loads[0].toFixed(2),
+                            label: '系统负载 (1分钟)'
+                        },
+                        {
+                            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+                            iconClass: 'success',
+                            value: this.formatSecond(this.status.uptime),
+                            label: '运行时间'
+                        },
+                        {
+                            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+                            iconClass: 'info',
+                            value: this.status.tcpCount,
+                            label: 'TCP 连接'
+                        },
+                        {
+                            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+                            iconClass: 'warning',
+                            value: this.status.udpCount,
+                            label: 'UDP 连接'
+                        }
+                    ];
+                },
+                progressItems() {
+                    return [
+                        { label: 'CPU 使用率', percent: this.status.cpu.percent, color: this.status.cpu.color },
+                        { label: '内存使用率', percent: this.status.mem.percent, color: this.status.mem.color },
+                        { label: 'Swap 使用率', percent: this.status.swap.percent, color: this.status.swap.color },
+                        { label: '磁盘使用率', percent: this.status.disk.percent, color: this.status.disk.color }
+                    ];
+                }
+            },
+            methods: {
+                sizeFormat(bytes) {
+                    if (bytes === 0) return '0 B';
+                    const k = 1024;
+                    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                },
+                formatSecond(seconds) {
+                    if (seconds === 0) return '0秒';
+                    const d = Math.floor(seconds / (3600 * 24));
+                    const h = Math.floor(seconds % (3600 * 24) / 3600);
+                    const m = Math.floor(seconds % 3600 / 60);
+                    const s = Math.floor(seconds % 60);
+
+                    let result = '';
+                    if (d > 0) result += d + '天';
+                    if (h > 0) result += h + '小时';
+                    if (m > 0) result += m + '分钟';
+                    if (s > 0 || result === '') result += s + '秒';
+                    return result;
+                },
+                async getStatus() {
+                    try {
+                        const msg = await HttpUtil.post('/server/status');
+                        if (msg.success) {
+                            this.status = new Status(msg.obj);
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                },
+                async openSelectV2rayVersion() {
+                    const loading = this.$loading({
+                        tip: '加载中...',
+                    });
+                    try {
+                        const msg = await HttpUtil.post('server/getXrayVersion');
+                        loading.loading = false;
+                        if (!msg.success) {
+                            return;
+                        }
+                        versionModal.show(msg.obj);
+                    } catch (e) {
+                        loading.loading = false;
+                        console.error(e);
+                    }
+                },
+                switchV2rayVersion(version) {
+                    this.$confirm({
+                        title: '切换 xray 版本',
+                        content: `是否切换 xray 版本至 ${version}?`,
+                        okText: '确定',
+                        cancelText: '取消',
+                        onOk: async () => {
+                            versionModal.hide();
+                            const loading = this.$loading({
+                                tip: '安装中，请不要刷新此页面',
+                            });
+                            try {
+                                await HttpUtil.post(`/server/installXray/${version}`);
+                            } finally {
+                                loading.loading = false;
+                            }
+                        },
+                    });
+                }
+            },
+            async mounted() {
+                await this.getStatus();
+                setInterval(() => {
+                    this.getStatus();
+                }, 2000);
+            },
+        });
+    </script>
 </body>
 </html>
